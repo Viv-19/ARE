@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AROS - Autonomous Research Orchestration System</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">🔬</span>
+                <div class="logo-text">
+                    <h1>AROS</h1>
+                    <span class="logo-subtitle">Autonomous Research Orchestration System</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="domain-badge">
+                    <span class="domain-icon">🎯</span>
+                    <span class="domain-text">Domain-Constrained</span>
+                </div>
+                <div class="status-badge" id="globalStatus">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Ready</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Domain Scope Section (Always Visible) -->
+            <section class="domain-scope-section glass-card">
+                <div class="domain-header">
+                    <h2>📋 Allowed Research Domains</h2>
+                    <span class="domain-badge-small">Hard Whitelist</span>
+                </div>
+                <div class="domain-grid">
+                    <div class="domain-item">
+                        <div class="domain-icon-box">⚡</div>
+                        <div class="domain-content">
+                            <h3>LLM Quantization</h3>
+                            <p>INT4, INT8, FP16, BF16</p>
+                        </div>
+                    </div>
+                    <div class="domain-item">
+                        <div class="domain-icon-box">🧠</div>
+                        <div class="domain-content">
+                            <h3>Transformer Architecture</h3>
+                            <p>Decoder-only LLMs</p>
+                        </div>
+                    </div>
+                    <div class="domain-item">
+                        <div class="domain-icon-box">⚖️</div>
+                        <div class="domain-content">
+                            <h3>Inference Trade-offs</h3>
+                            <p>Efficiency vs Quality</p>
+                        </div>
+                    </div>
+                    <div class="domain-item">
+                        <div class="domain-icon-box">🔧</div>
+                        <div class="domain-content">
+                            <h3>Transformer Internals</h3>
+                            <p>Residual, Attention, MLP</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="domain-warning">
+                    <span class="warning-icon">⚠️</span>
+                    <span>Out-of-scope queries are rejected at NODE-0. No downstream override allowed.</span>
+                </div>
+            </section>
+
+            <!-- Research Input Section -->
+            <section class="input-section glass-card">
+                <h2>🎯 Research Objective</h2>
+                <form id="researchForm">
+                    <div class="input-wrapper">
+                        <textarea id="questionInput"
+                            placeholder="Enter your research question in natural language...
+
+Example: Does INT4 quantization reduce inference latency without significantly degrading output quality in decoder-only LLMs?"
+                            rows="4"></textarea>
+                    </div>
+                    <div class="input-footer">
+                        <div class="input-hints">
+                            <span class="hint-item">💡 Be specific about variables</span>
+                            <span class="hint-item">📊 Include measurable outcomes</span>
+                        </div>
+                        <button type="submit" class="submit-btn" id="submitBtn">
+                            <span class="btn-text">Start Research</span>
+                            <span class="btn-icon">🚀</span>
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- NODE-0 Output Display (Shows after intake) -->
+            <section class="node0-output-section glass-card" id="node0OutputSection" style="display: none;">
+                <div class="node0-header">
+                    <h2>📥 Research Question Analysis</h2>
+                    <span class="node-badge">NODE-0 Output</span>
+                </div>
+                <div class="node0-content">
+                    <div class="analysis-item">
+                        <label>Normalized Question</label>
+                        <div class="analysis-value" id="normalizedQuestion">---</div>
+                    </div>
+                    <div class="analysis-grid">
+                        <div class="analysis-card">
+                            <label>Research Intent</label>
+                            <div class="analysis-tag" id="researchIntent">---</div>
+                        </div>
+                        <div class="analysis-card">
+                            <label>Confidence</label>
+                            <div class="confidence-meter">
+                                <div class="confidence-bar" id="confidenceBar"></div>
+                                <span class="confidence-value" id="confidenceValue">---</span>
+                            </div>
+                        </div>
+                        <div class="analysis-card">
+                            <label>Autonomy Level</label>
+                            <div class="analysis-tag" id="autonomyLevel">---</div>
+                        </div>
+                        <div class="analysis-card">
+                            <label>Evidence Threshold</label>
+                            <div class="analysis-tag" id="evidenceThreshold">---</div>
+                        </div>
+                    </div>
+                    <div class="variables-section">
+                        <h3>Extracted Variables</h3>
+                        <div class="variables-grid">
+                            <div class="variable-card independent">
+                                <label>Independent</label>
+                                <ul id="independentVars"></ul>
+                            </div>
+                            <div class="variable-card dependent">
+                                <label>Dependent</label>
+                                <ul id="dependentVars"></ul>
+                            </div>
+                            <div class="variable-card control">
+                                <label>Control</label>
+                                <ul id="controlVars"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="node0-actions">
+                    <p class="confirmation-prompt">Do you want to continue with this research specification?</p>
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary" id="requestChangesBtn">
+                            <span>✏️ Request Changes</span>
+                        </button>
+                        <button class="btn btn-primary" id="continueResearchBtn">
+                            <span>✓ Continue Research</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Reasoning Section -->
+            <section class="reasoning-section glass-card" id="reasoningSection" style="display: none;">
+                <div class="reasoning-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                    <h2>🧠 Agent Reasoning</h2>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="reasoning-content" id="reasoningContent">
+                    <div class="reasoning-placeholder">Waiting for agent thought process...</div>
+                </div>
+            </section>
+
+            <!-- Execution Graph Section -->
+            <section class="graph-section glass-card" id="graphSection" style="display: none;">
+                <div class="graph-header">
+                    <h2>⚡ Execution Pipeline</h2>
+                    <span class="current-node-label" id="currentNodeLabel">Starting...</span>
+                </div>
+                <div class="graph-container">
+                    <div class="graph-nodes">
+                        <div class="node" data-node="node_0">
+                            <div class="node-icon">📥</div>
+                            <div class="node-label">Intake</div>
+                            <div class="node-status"></div>
+                        </div>
+                        <div class="node-connector"></div>
+                        <div class="node hitl-node" data-node="node_0_confirmation">
+                            <div class="node-icon">🛡️</div>
+                            <div class="node-label">Confirm</div>
+                            <div class="node-status"></div>
+                        </div>
+                        <div class="node-connector"></div>
+                        <div class="node" data-node="node_1">
+                            <div class="node-icon">🔀</div>
+                            <div class="node-label">Router</div>
+                            <div class="node-status"></div>
+                        </div>
+                        <div class="node-connector"></div>
+                        <div class="node" data-node="node_2">
+                            <div class="node-icon">📚</div>
+                            <div class="node-label">Evidence</div>
+                            <div class="node-status"></div>
+                        </div>
+                        <div class="node-connector"></div>
+                        <div class="node" data-node="node_3">
+                            <div class="node-icon">📋</div>
+                            <div class="node-label">Contract</div>
+                            <div class="node-status"></div>
+                        </div>
+                        <div class="node-connector"></div>
+                        <div class="node hitl-node" data-node="node_4">
+                            <div class="node-icon">👤</div>
+                            <div class="node-label">HITL-1</div>
+                            <div class="node-status"></div>
+                        </div>
+                        <div class="node-connector"></div>
+                        <div class="node" data-node="node_5">
+                            <div class="node-icon">⚙️</div>
+                            <div class="node-label">Worker</div>
+                            <div class="node-status"></div>
+                        </div>
+                        <div class="node-connector"></div>
+                        <div class="node" data-node="node_6">
+                            <div class="node-icon">🔍</div>
+                            <div class="node-label">Critic</div>
+                            <div class="node-status"></div>
+                        </div>
+                        <div class="node-connector"></div>
+                        <div class="node hitl-node" data-node="node_7">
+                            <div class="node-icon">👤</div>
+                            <div class="node-label">HITL-2</div>
+                            <div class="node-status"></div>
+                        </div>
+                        <div class="node-connector"></div>
+                        <div class="node" data-node="node_8">
+                            <div class="node-icon">📄</div>
+                            <div class="node-label">Report</div>
+                            <div class="node-status"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Experiment Code Section (NODE-5 Output) -->
+            <section class="experiment-section glass-card" id="experimentSection" style="display: none;">
+                <div class="experiment-header">
+                    <h2>🧪 Experiment Code</h2>
+                    <span class="node-badge">NODE-5 Output</span>
+                </div>
+                <div class="experiment-instructions" id="experimentInstructions">
+                    <!-- Instructions will be injected here -->
+                </div>
+                <div class="code-container">
+                    <div class="code-header">
+                        <span>Python</span>
+                        <button class="copy-btn" id="copyCodeBtn">📋 Copy</button>
+                    </div>
+                    <pre class="code-content" id="experimentCode"></pre>
+                </div>
+                <div class="experiment-actions">
+                    <button class="btn btn-primary" id="submitResultsBtn">
+                        <span>📊 Submit Results</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- HITL Modal (Generalized) -->
+            <div class="modal-overlay" id="hitlModal" style="display: none;">
+                <div class="modal glass-card">
+                    <div class="modal-header">
+                        <h3 id="modalTitle">👤 Human Input Required</h3>
+                        <span class="modal-node-badge" id="modalNodeBadge">NODE-X</span>
+                    </div>
+                    <div class="modal-body" id="modalBody">
+                        <!-- Dynamic Content injected by JS -->
+                    </div>
+                    <div class="feedback-input-wrapper" id="feedbackWrapper" style="display: none;">
+                        <textarea id="feedbackInput" placeholder="Enter instructions to refine the plan..."></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-reject" id="rejectBtn">
+                            <span id="rejectBtnText">✕ Reject</span>
+                        </button>
+                        <button class="btn btn-approve" id="approveBtn">
+                            <span id="approveBtnText">✓ Approve</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <section class="results-section glass-card" id="resultsSection" style="display: none;">
+                <div class="results-header">
+                    <h2>📊 Research Complete</h2>
+                    <div class="verdict-badges">
+                        <div class="verdict-badge" id="verdictBadge">
+                            <span class="verdict-label">Verdict</span>
+                            <span class="verdict-value" id="verdictValue">---</span>
+                        </div>
+                        <div class="confidence-badge" id="confidenceBadge">
+                            <span class="confidence-label">Confidence</span>
+                            <span class="confidence-value" id="finalConfidenceValue">---</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="report-container">
+                    <div class="report-tabs">
+                        <button class="tab-btn active" data-tab="markdown">📝 Report</button>
+                        <button class="tab-btn" data-tab="json">📦 JSON</button>
+                    </div>
+                    <div class="report-content" id="reportContent">
+                        <div class="tab-panel active" id="markdownPanel">
+                            <div class="markdown-content" id="markdownContent"></div>
+                        </div>
+                        <div class="tab-panel" id="jsonPanel">
+                            <pre class="json-content" id="jsonContent"></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Logs Section -->
+            <section class="logs-section glass-card" id="logsSection" style="display: none;">
+                <h2>📋 Execution Log</h2>
+                <div class="logs-container" id="logsContainer"></div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>AROS v2.0 • Powered by LangGraph + Gemini • Domain-Constrained Scientific Research</p>
+        </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+
+</html>
