@@ -39,4 +39,3 @@ We have comprehensive documentation available in the `docs/` directory:
 - [Node Reference](docs/NODES.md): Detailed responsibilities and I/O for all 9 agents (NODE-0 through NODE-8).
 - [API Reference](docs/API.md): Endpoints, SSE streaming, and payload schemas for the FastAPI backend.
 - [Development Guide](docs/DEVELOPMENT.md): Setup, testing, and contribution guidelines.
-
