@@ -72,6 +72,44 @@ python main.py --cli --question "Does INT4 Quantization significantly degrade co
 
 ARE strictly enforces a **Ports and Adapters** layout to keep domain intelligence decoupled from the runtime execution and API calls. For in-depth context on the LangGraph node routing and dependency injection layout, read the comprehensive **[Architecture Overview](docs/ARCHITECTURE.md)**.
 
+### LangGraph State Machine Topology
+
+```mermaid
+graph TD
+    Entry([Entry]) --> N0[NODE-0: Intake]
+    
+    N0 -->|confidence_gate| CG{Confidence Gate}
+    CG -->|confirm| N0C[NODE-0 Confirm]
+    CG -->|proceed| N1[NODE-1: Router]
+    N0C --> N1
+    
+    N1 -->|research_router| RR{Research Router}
+    RR -->|summarize| N8[NODE-8: Report]
+    RR -->|research| N2[NODE-2: Evidence]
+    
+    N2 --> N3[NODE-3: Contract]
+    N3 --> N4[NODE-4: HITL-1]
+    
+    N4 -->|approval_check| AC{Approval}
+    AC -->|approve| N5[NODE-5: Execution]
+    AC -->|reject/refine| N3
+    
+    N5 --> N6[NODE-6: Critic]
+    
+    N6 -->|verdict_router| VR{Verdict}
+    VR -->|report| N8
+    VR -->|critic| N7[NODE-7: HITL-2]
+    
+    N7 -->|loop_decision| LD{Loop Check}
+    LD -->|continue| N5
+    LD -->|finish| N8
+    
+    N8 --> Exit([Exit])
+```
+
+### Directory Structure
+
+
 ```
 are/
 ├── application/         # DI Container mapping Adapters to their Ports.
