@@ -1,17 +1,14 @@
 # Development Guide
 
-Welcome to the ARE contributor guide. This document outlines how to set up the project locally for development and testing.
-
 ## Prerequisites
 - Python 3.10+
-- Node.js (Optional, for frontend tooling if added later)
-- An active API key for Gemini (if `USE_GEMINI=True` in config).
+- A Groq or Gemini API key for LLM-powered reasoning.
 
 ## Environment Setup
 
 1. **Clone the repository:**
    ```bash
-   git clone <repository_url>
+   git clone https://github.com/Viv-19/ARE.git
    cd ARE
    ```
 
@@ -23,50 +20,61 @@ Welcome to the ARE contributor guide. This document outlines how to set up the p
 
 3. **Install dependencies:**
    ```bash
-   pip install -r requirements.txt
+   pip install -e .
    ```
-   *(Ensure you have `langchain`, `langgraph`, `fastapi`, and `uvicorn` installed).*
 
 4. **Configuration (`.env`):**
-   Copy `.env.example` to `.env` and fill in your keys:
-   ```env
-   GEMINI_API_KEY=your_api_key_here
-   DEBUG_MODE=True
+   Copy `.env.example` to `.env` and fill in your API keys:
+   ```bash
+   cp .env.example .env
    ```
-   You can verify your configuration by running `python check_config.py`.
+   Key settings:
+   - `LLM_PROVIDER` — `groq`, `gemini`, or `mock`
+   - `LLM_API_KEY` — Your API key for the chosen provider
+   - `USE_MOCK_SEARCH` — Set to `false` for real Semantic Scholar / ArXiv queries
 
 ## Running the Application
 
-### Backend Server
-Run the FastAPI application with auto-reload enabled:
+### Web Server (FastAPI + Frontend)
 ```bash
-uvicorn api:app --reload --port 8000
+python main.py
 ```
-Then navigate to `http://localhost:8000`.
+Then open `http://localhost:8000` in your browser.
 
-### CLI Interface
-You can bypass the frontend entirely and run a research session directly from the terminal. This is useful for rapid testing of the LangGraph state machine:
+### CLI Mode
 ```bash
-python run.py "What is the optimal batch size for fine-tuning Llama-3.2-3B?"
+python main.py --cli --question "Does INT4 quantization reduce inference latency in 7B LLMs?"
 ```
 
 ## Testing
 
-ARE uses `pytest` for unit and integration testing. Tests are located in the `tests/` directory.
+ARE uses `pytest` with unit and integration test suites:
 
 ```bash
-# Run all tests
-pytest tests/
-
-# Run a specific test file
-pytest tests/test_v4_flow.py -v
+# Run full test suite
+pytest tests/unit tests/integration -v
 ```
 
-## Code Structure Overview
+> Tests use the mock LLM adapter by default — no API keys required.
 
-- `api.py`: FastAPI application, SSE streaming, and route definitions.
-- `run.py`: CLI entrypoint for running the LangGraph workflow directly.
-- `src/are/graph.py`: The core LangGraph state machine definition.
-- `src/are/state.py`: The `TypedDict` defining the shared memory for the graph.
-- `src/are/nodes/`: Directory containing the logic for nodes 0 through 8.
-- `frontend/`: Static HTML, CSS, and JS files for the web interface. 
+## Code Structure
+
+```
+main.py                     # Application entry point (server or CLI)
+are/
+├── config/settings.py      # Pydantic Settings (single source of truth)
+├── core/
+│   ├── graph.py            # LangGraph state machine definition
+│   ├── state.py            # GraphState TypedDict
+│   ├── nodes/              # Node logic (NODE-0 through NODE-8)
+│   └── logic/              # Pure business logic (confidence, dedup, etc.)
+├── adapters/
+│   ├── llm/                # LLM providers (Groq, Gemini, Mock)
+│   └── search/             # Academic search (Semantic Scholar, ArXiv, Mock)
+├── ports/                  # Abstract interfaces (LLMPort, SearchPort, etc.)
+├── application/            # DI Container + ResearchService
+└── interfaces/
+    ├── api/app.py          # FastAPI app factory
+    └── cli/runner.py       # Interactive CLI runner
+frontend/                   # Static HTML/CSS/JS web interface
+```

@@ -424,8 +424,39 @@ class AREApp {
         this.elements.feedbackInput.value = '';
         this.hitlType = payload.type || 'approval'; // Store type for handling
 
-        if (payload.type === 'confirmation') {
-            // CONFIRMATION MODE (Node-0)
+        if (payload.type === 'clarification') {
+            // CLARIFICATION MODE — vague query detected
+            this.hitlType = 'clarification';
+            this.elements.modalTitle.textContent = "🔍 Clarification Needed";
+            const questionsHtml = (payload.clarification_questions || [])
+                .map((q, i) => `<li>${q}</li>`)
+                .join('');
+            this.elements.modalBody.innerHTML = `
+                <div class="clarification-details">
+                    <p class="clarification-notice">
+                        Your query is too vague to produce meaningful research.
+                        Please answer the questions below to help us understand
+                        what you're looking for.
+                    </p>
+                    <div class="current-analysis">
+                        <strong>Current interpretation:</strong>
+                        <p>${payload.normalized_question || 'N/A'}</p>
+                        <strong>Confidence:</strong> ${((payload.intent_confidence || 0) * 100).toFixed(0)}%
+                    </div>
+                    <div class="clarification-questions">
+                        <strong>Please address:</strong>
+                        <ol>${questionsHtml}</ol>
+                    </div>
+                </div>
+            `;
+            this.elements.approveBtnText.textContent = "Submit Clarification";
+            this.elements.rejectBtnText.textContent = "Proceed Anyway";
+            this.elements.feedbackWrapper.style.display = 'block';
+            this.elements.feedbackInput.placeholder = "Type your detailed response here...";
+
+        } else if (payload.type === 'confirmation') {
+            // CONFIRMATION MODE (Node-0) — clear query
+            this.hitlType = 'confirmation';
             this.elements.modalTitle.textContent = "🛡️ Research Scope Confirmation";
             this.elements.modalBody.innerHTML = `
                 <div class="confirmation-details">
@@ -440,16 +471,7 @@ class AREApp {
             `;
             this.elements.approveBtnText.textContent = "✓ Proceed";
             this.elements.rejectBtnText.textContent = "✎ Refine";
-
-            // Refine button logic handled in click handler via "refine" action
-            // But we need to toggle feedback input on 'reject'/refine click? 
-            // Actually, let's show input when they click refine? 
-            // Or just always show it for refinement?
-            // Let's make the Refine button toggle the input, and then change to "Submit Refinement"
-
-            this.elements.feedbackWrapper.style.display = 'block'; // Always show feedback input option? 
-            // Better UX: "Proceed" ignores input. "Refine" uses input.
-            // If input is empty, "Refine" warns?
+            this.elements.feedbackWrapper.style.display = 'block';
 
         } else {
             // APPROVAL MODE (Node-4/7)
@@ -486,14 +508,25 @@ class AREApp {
         let finalAction = 'approve'; // default API expectation
         let feedback = null;
 
-        if (this.hitlType === 'confirmation') {
+        if (this.hitlType === 'clarification') {
+            // CLARIFICATION: left btn = submit clarification, right btn = proceed anyway
+            if (actionType === 'approve') {
+                feedback = this.elements.feedbackInput.value.trim();
+                if (!feedback) {
+                    alert("Please provide your clarification before submitting.");
+                    return;
+                }
+                finalAction = 'clarify';
+            } else {
+                finalAction = 'approve'; // "Proceed Anyway"
+            }
+        } else if (this.hitlType === 'confirmation') {
             if (actionType === 'approve') {
                 finalAction = 'approve';
             } else {
-                // Refine
                 finalAction = 'refine';
                 feedback = this.elements.feedbackInput.value.trim();
-                if (!feedback && actionType === 'refine') {
+                if (!feedback) {
                     alert("Please provide feedback to refine the plan.");
                     return;
                 }
@@ -501,9 +534,6 @@ class AREApp {
         } else {
             // Standard Approval
             finalAction = actionType === 'approve' ? 'approve' : 'reject';
-            // Logic for Node-7 loop handled in backend based on "approve" (continue) vs "reject" (terminate) ??
-            // api.py handles: if node_7: approve -> continue, else -> terminate? 
-            // Wait, api.py: "continue" if request.action == "approve" else "terminate"
         }
 
         try {
